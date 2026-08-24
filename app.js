@@ -1,5 +1,5 @@
 
-const APP_VERSION = "1.0.0";
+const APP_VERSION = "2.0.0";
 const STORAGE_KEY = "aux_cm_2026_progress_v1";
 const BANK_KEY = "aux_cm_2026_custom_bank_v1";
 
@@ -29,22 +29,42 @@ function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); 
 function customBank(){
   try { return JSON.parse(localStorage.getItem(BANK_KEY)||"[]"); } catch { return []; }
 }
-function bank(){
+function normalizeLabel(s=""){
+  return String(s).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+}
+function psychKind(q){
+  if(q.block!=="psych") return null;
+  const s=normalizeLabel(`${q.subtype||""} ${q.topicName||""}`);
+  if(s.includes("sinonim")) return "syn";
+  if(s.includes("antonim")) return "ant";
+  if(s.includes("ortograf") || s.includes("acentuac")) return "ort";
+  return null;
+}
+function isActiveQuestion(q){
+  return q.block!=="psych" || psychKind(q)!==null;
+}
+function allBank(){
   const seen = new Set();
   return [...(window.QUESTION_BANK||[]), ...customBank()].filter(q=>{
     if(seen.has(q.id)) return false; seen.add(q.id); return true;
   });
 }
+function bank(){ return allBank().filter(isActiveQuestion); }
+function hiddenPsychCount(){ return allBank().filter(q=>q.block==="psych" && !psychKind(q)).length; }
 function esc(s=""){ return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m])); }
 function shuffle(a){ const x=[...a]; for(let i=x.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[x[i],x[j]]=[x[j],x[i]];} return x; }
 function fmtPct(n){ return Number.isFinite(n) ? `${n.toFixed(1)} %` : "—"; }
 function toast(msg){ const t=document.getElementById("toast"); t.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1800); }
 function navigate(r){ route=r; session=null; render(); }
-function blockLabel(b){ return b==="psych"?"Psicotécnico":b==="legislation"?"Legislación":"Ofimática"; }
+function blockLabel(b){ return b==="psych"?"Psicotécnico verbal":b==="legislation"?"Legislación":"Ofimática"; }
 
 function getOverall(){
   let seen=0,correct=0,wrong=0;
-  Object.values(state.qstats).forEach(s=>{seen+=s.seen||0;correct+=s.correct||0;wrong+=s.wrong||0;});
+  const activeIds=new Set(bank().map(q=>q.id));
+  Object.entries(state.qstats).forEach(([id,s])=>{
+    if(!activeIds.has(id)) return;
+    seen+=s.seen||0;correct+=s.correct||0;wrong+=s.wrong||0;
+  });
   return {seen,correct,wrong,acc:seen?correct/seen*100:0};
 }
 function weakQuestions(){
@@ -62,16 +82,17 @@ function render(){
 
 function renderHome(app){
   const o=getOverall(), weak=weakQuestions().slice(0,4), last=state.attempts[0];
+  const activeFavs=state.favorites.filter(id=>bank().some(q=>q.id===id)).length;
   app.innerHTML=`
     <section class="hero">
-      <h1>Entrena como el examen real.</h1>
-      <p>Primer ejercicio: 30 psicotécnicos + 30 de legislación en 65 minutos. Segundo ejercicio: 30 de ofimática en 35 minutos. Error: −1/3. Banco inicial: ${bank().length} preguntas.</p>
+      <h1>Practica rápido. Repite lo que fallas.</h1>
+      <p>Psicotécnico rápido: solo sinónimos, antónimos y ortografía/acentuación. Legislación y ofimática mantienen todo su banco. El simulacro del primer ejercicio conserva 30 + 30 y 65 minutos, pero su parte psicotécnica está adaptada a este formato verbal.</p>
       <div class="actions"><button class="primary" onclick="navigate('practice')">Empezar práctica</button><button class="secondary" onclick="navigate('exam')">Hacer simulacro</button></div>
     </section>
     <section class="grid">
       <div class="card"><div class="metric">${o.seen}</div><div class="metricLabel">respuestas acumuladas</div></div>
       <div class="card"><div class="metric">${fmtPct(o.acc)}</div><div class="metricLabel">acierto bruto</div></div>
-      <div class="card"><div class="metric">${state.favorites.length}</div><div class="metricLabel">favoritas</div></div>
+      <div class="card"><div class="metric">${activeFavs}</div><div class="metricLabel">favoritas activas</div></div>
       <div class="card wide">
         <h2>Puntos débiles</h2>
         ${weak.length?weak.map(x=>`<div class="reviewItem"><strong>${esc(x.q.question)}</strong><div class="small">${blockLabel(x.q.block)} · ${x.q.topicName} · ${x.s.wrong} fallo(s)</div></div>`).join(""):`<div class="empty">Todavía no hay fallos registrados.</div>`}
@@ -89,17 +110,31 @@ function renderHome(app){
 }
 
 function topicOptions(block){
-  const qs=bank().filter(q=>q.block===block), ids=[...new Set(qs.map(q=>q.topic))].sort((a,b)=>a-b);
+  const qs=bank().filter(q=>q.block===block);
+  if(block==="psych"){
+    const kinds=new Set(qs.map(psychKind));
+    let html=`<option value="all">Todo verbal</option>`;
+    if(kinds.has("syn")) html+=`<option value="sub:syn">Sinónimos</option>`;
+    if(kinds.has("ant")) html+=`<option value="sub:ant">Antónimos</option>`;
+    if(kinds.has("ort")) html+=`<option value="sub:ort">Ortografía y tildes</option>`;
+    return html;
+  }
+  const ids=[...new Set(qs.map(q=>q.topic))].sort((a,b)=>a-b);
   return `<option value="all">Todos los temas</option>`+ids.map(t=>`<option value="${t}">${t?`Tema ${t} · `:""}${esc(topicNames[t]||qs.find(q=>q.topic===t)?.topicName||"General")}</option>`).join("");
+}
+function matchesPracticeCategory(q,value){
+  if(value==="all") return true;
+  if(q.block==="psych" && value.startsWith("sub:")) return psychKind(q)===value.slice(4);
+  return String(q.topic)===value;
 }
 function renderPracticeSetup(app){
   app.innerHTML=`
   <div class="grid">
     <div class="card full">
-      <h2>Práctica personalizada</h2><p>Elige bloque, tema y cantidad. Puedes corregir cada pregunta al instante o esperar al final.</p>
+      <h2>Práctica personalizada</h2><p>En psicotécnico solo aparecerán sinónimos, antónimos y ortografía/tildes. Elige bloque, tipo o tema y cantidad.</p>
       <div class="formGrid">
         <div class="field"><label>Bloque</label><select id="pBlock" onchange="refreshPracticeTopics()">
-          <option value="psych">Psicotécnico</option><option value="legislation">Legislación</option><option value="office">Ofimática</option></select></div>
+          <option value="psych">Psicotécnico verbal</option><option value="legislation">Legislación</option><option value="office">Ofimática</option></select></div>
         <div class="field"><label>Tema / tipo</label><select id="pTopic">${topicOptions("psych")}</select></div>
         <div class="field"><label>Número de preguntas</label><input id="pCount" type="number" min="1" max="100" value="${state.settings.practiceCount||20}"></div>
         <div class="field"><label>Dificultad</label><select id="pDiff"><option value="all">Todas</option><option value="1">Básica</option><option value="2">Media</option><option value="3">Alta</option></select></div>
@@ -116,7 +151,7 @@ function refreshPracticeTopics(){
 }
 function startPractice(){
   const b=document.getElementById("pBlock").value, t=document.getElementById("pTopic").value, d=document.getElementById("pDiff").value;
-  let pool=bank().filter(q=>q.block===b && (t==="all"||String(q.topic)===t) && (d==="all"||String(q.difficulty)===d));
+  let pool=bank().filter(q=>q.block===b && matchesPracticeCategory(q,t) && (d==="all"||String(q.difficulty)===d));
   const n=Math.min(Math.max(1,parseInt(document.getElementById("pCount").value)||20),pool.length);
   if(!pool.length) return toast("No hay preguntas con esos filtros.");
   state.settings.practiceCount=n;saveState();
@@ -146,9 +181,9 @@ function renderExamSetup(app){
   app.innerHTML=`
     <div class="grid">
       <div class="card half">
-        <h2>Primer ejercicio</h2>
-        <p><strong>60 + 5 reserva · 65 min</strong><br>30 psicotécnicos + 30 legislación. Las 5 reservas se corrigen aparte.</p>
-        <div class="pill">Banco: ${counts.psych} psic. + ${counts.legislation} leg.</div>
+        <h2>Primer ejercicio adaptado</h2>
+        <p><strong>60 + 5 reserva · 65 min</strong><br>30 psicotécnicos verbales + 30 legislación. Las 5 reservas se corrigen aparte.</p>
+        <div class="pill">Banco: ${counts.psych} verbal + ${counts.legislation} legislación</div>
         <div class="actions"><button class="primary" onclick="startExam(1)">Iniciar primer ejercicio</button></div>
       </div>
       <div class="card half">
@@ -166,7 +201,7 @@ function sampleNoRepeat(arr,n){ return shuffle(arr).slice(0,n); }
 function startExam(which){
   if(which===1){
     const ps=shuffle(bank().filter(q=>q.block==="psych")), lg=shuffle(bank().filter(q=>q.block==="legislation"));
-    if(ps.length<33||lg.length<32) return toast("Necesitas al menos 33 psicotécnicas y 32 de legislación.");
+    if(ps.length<33||lg.length<32) return toast("Necesitas al menos 33 psicotécnicas verbales y 32 de legislación.");
     const main=[...ps.slice(0,30),...lg.slice(0,30)];
     const reserve=[...ps.slice(30,32),...lg.slice(30,33)].map(q=>({...q,_reserve:true}));
     beginSession({mode:"exam",name:"Primer ejercicio",questions:[...main,...reserve],immediate:false,shuffleOptions:false,timeLimit:65*60,mainCount:60});
@@ -364,7 +399,9 @@ function importQuestions(file){
     try{
       const arr=validateImported(JSON.parse(r.result));
       const existing=customBank(), map=new Map(existing.map(q=>[q.id,q]));arr.forEach(q=>map.set(q.id,q));
-      localStorage.setItem(BANK_KEY,JSON.stringify([...map.values()]));toast(`${arr.length} preguntas importadas.`);render();
+      localStorage.setItem(BANK_KEY,JSON.stringify([...map.values()]));
+      const hidden=arr.filter(q=>q.block==="psych" && !psychKind(q)).length;
+      toast(hidden?`${arr.length-hidden} activas · ${hidden} psicotécnicas no verbales ocultas`:`${arr.length} preguntas importadas.`);render();
     }catch(e){alert("No se pudo importar: "+e.message);}
   };r.readAsText(file);
 }
@@ -381,11 +418,12 @@ function resetProgress(){if(confirm("Se borrarán estadísticas, historial y fav
 function resetCustomBank(){if(confirm("Se eliminarán solo las preguntas importadas; el banco inicial se conserva.")){localStorage.removeItem(BANK_KEY);render();toast("Banco importado eliminado.");}}
 
 function renderData(app){
+  const hidden=hiddenPsychCount(), total=allBank().length;
   app.innerHTML=`
     <div class="grid">
-      <div class="card half"><h2>Banco de preguntas</h2><p>${bank().length} preguntas activas: ${window.QUESTION_BANK.length} iniciales + ${customBank().length} importadas.</p>
+      <div class="card half"><h2>Banco de preguntas</h2><p><strong>${bank().length} preguntas activas</strong> de ${total} almacenadas. ${hidden?`${hidden} psicotécnicas no verbales están ocultas y no saldrán en prácticas, simulacros, favoritas ni falladas.`:""}</p>
         <div class="actions"><label class="primary" style="display:inline-block">Importar JSON<input hidden type="file" accept=".json,application/json" onchange="importQuestions(this.files[0])"></label><button class="secondary" onclick="exportBank()">Exportar banco</button></div>
-        <p class="small">Las preguntas con el mismo ID sustituyen a la versión importada anterior.</p>
+        <p class="small">Filtro psicotécnico activo: sinónimos, antónimos y ortografía/acentuación. Las preguntas numéricas, lógicas o de cálculo se conservan en el almacenamiento pero quedan fuera de la app.</p>
       </div>
       <div class="card half"><h2>Copia de seguridad</h2><p>Exporta tu historial, estadísticas y favoritas para moverlos a otro dispositivo.</p>
         <div class="actions"><button class="primary" onclick="exportProgress()">Exportar progreso</button><label class="secondary" style="display:inline-block">Importar progreso<input hidden type="file" accept=".json,application/json" onchange="importProgress(this.files[0])"></label></div>
