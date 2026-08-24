@@ -1,5 +1,5 @@
 
-const APP_VERSION = "3.1.0";
+const APP_VERSION = "3.2.0";
 const STORAGE_KEY = "aux_cm_2026_progress_v1";
 const BANK_KEY = "aux_cm_2026_custom_bank_v1";
 
@@ -513,6 +513,10 @@ function renderSession(app){
           return `<button class="${cls}" ${corrected&&session.immediate?"disabled":""} onclick="answer(${x.orig})"><span class="letter">${"ABCD"[i]}</span><span>${esc(x.text)}</span></button>`;
         }).join("")}
       </div>
+      ${corrected && session.immediate?`
+        <div class="actions afterOptionsNext">
+          <button class="primary" onclick="nextQ()">${session.index===session.questions.length-1?"Finalizar":"Siguiente →"}</button>
+        </div>`:""}
       ${corrected?feedbackHtml(q,ans):""}
       <div class="navRow">
         <button class="ghost" onclick="prevQ()" ${session.index===0?"disabled":""}>← Anterior</button>
@@ -520,7 +524,7 @@ function renderSession(app){
           ${session.mode==="exam"?`<button class="ghost" onclick="toggleMarked()">${session.marked[q.id]?"★ Marcada":"☆ Marcar"}</button>`:""}
           ${session.immediate && ans!==undefined && !corrected?`<button class="primary" onclick="correctCurrent()">Corregir</button>`:""}
           ${session.immediate && ans===undefined?`<button class="secondary skipBtn" onclick="nextQ()">${session.index===session.questions.length-1?"Dejar en blanco y finalizar":"Dejar en blanco →"}</button>`:""}
-          ${(!session.immediate || corrected)?`<button class="primary" onclick="nextQ()">${session.index===session.questions.length-1?"Finalizar":"Siguiente →"}</button>`:""}
+          ${!session.immediate?`<button class="primary" onclick="nextQ()">${session.index===session.questions.length-1?"Finalizar":"Siguiente →"}</button>`:""}
         </div>
       </div>
       ${session.mode==="exam"?`<div class="divider"></div><div class="palette">${session.questions.map((x,i)=>`<button class="qdot ${session.answers[x.id]!==undefined?"answered":""} ${i===session.index?"current":""} ${session.marked[x.id]?"marked":""}" onclick="goQ(${i})">${i+1}</button>`).join("")}</div>`:""}
@@ -729,6 +733,6 @@ document.getElementById("installBtn").addEventListener("click",async()=>{if(!def
 window.addEventListener("appinstalled",()=>toast("Aplicación instalada."));
 
 if("serviceWorker" in navigator && location.protocol!=="file:"){
-  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js?v=31",{updateViaCache:"none"}).catch(()=>{}));
+  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js?v=32",{updateViaCache:"none"}).catch(()=>{}));
 }
 render();

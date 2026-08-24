@@ -1,7 +1,7 @@
-const CACHE="auxiliar-cm-2026-v31";
+const CACHE="auxiliar-cm-2026-v32";
 const CORE=[
-  "./","./index.html","./styles.css?v=31","./app.js?v=31","./questions.js",
-  "./manifest.json?v=31","./icons/icon-192.png","./icons/icon-512.png"
+  "./","./index.html","./styles.css?v=32","./app.js?v=32","./questions.js",
+  "./manifest.json?v=32","./icons/icon-192.png","./icons/icon-512.png"
 ];
 
 self.addEventListener("install", event => {

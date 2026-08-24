@@ -114,3 +114,10 @@ kbd{border:1px solid var(--line);background:var(--bg);border-radius:5px;padding:
   .reaction{justify-content:flex-start}.reaction img{width:150px}
   .shortcutCard{align-items:flex-start}.miniGif{width:84px}
 }
+
+/* V3.2: navegación rápida tras corregir */
+.afterOptionsNext{margin:12px 0 4px;justify-content:flex-end}
+.afterOptionsNext .primary{min-width:150px}
+@media(max-width:620px){
+  .afterOptionsNext .primary{width:100%}
+}
