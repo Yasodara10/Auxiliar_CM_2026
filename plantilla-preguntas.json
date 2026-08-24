@@ -1,0 +1,22 @@
+[
+  {
+    "id": "mi-pregunta-001",
+    "block": "legislation",
+    "topic": 1,
+    "topicName": "Constitución Española",
+    "subtype": "literalidad",
+    "difficulty": 2,
+    "question": "Escribe aquí el enunciado.",
+    "context": "",
+    "options": [
+      "Opción A",
+      "Opción B",
+      "Opción C",
+      "Opción D"
+    ],
+    "correct": 0,
+    "explanation": "Explicación de la respuesta correcta.",
+    "sourceType": "original",
+    "sourceName": "Mi banco"
+  }
+]

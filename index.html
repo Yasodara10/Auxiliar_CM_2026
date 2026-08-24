@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#b20d18">
+  <meta name="description" content="Entrenamiento Auxiliar Administrativo Comunidad de Madrid 2026">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="styles.css">
+  <title>Auxiliar CM · 2026</title>
+</head>
+<body>
+<header class="topbar">
+  <button class="brand" id="homeBtn" aria-label="Ir al inicio">
+    <span class="logoMark">CM</span>
+    <span><strong>AUXILIAR CM</strong><small>2026</small></span>
+  </button>
+  <div class="topActions">
+    <button class="ghost" id="installBtn" hidden>Instalar</button>
+    <button class="ghost" id="themeBtn" title="Cambiar tema">◐</button>
+  </div>
+</header>
+
+<main id="app" class="shell"></main>
+
+<nav class="bottomNav" aria-label="Navegación principal">
+  <button data-route="home" class="active">Inicio</button>
+  <button data-route="practice">Practicar</button>
+  <button data-route="exam">Simulacro</button>
+  <button data-route="stats">Estadísticas</button>
+  <button data-route="data">Datos</button>
+</nav>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script src="questions.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
