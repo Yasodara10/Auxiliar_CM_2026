@@ -1,18 +1,17 @@
-# Auxiliar CM 2026 · PWA V3
+# Auxiliar CM 2026 · V3.1
 
-Cambios principales:
-- El nombre real del tema aparece siempre en la pregunta (Word, Excel, Constitución, etc.), sin etiquetas tipo “Tema 17”.
-- En práctica se puede dejar una pregunta en blanco y pasar a la siguiente.
-- Las preguntas en blanco quedan registradas y tienen su propio repaso desde Inicio.
-- Corrección ampliada: explicación estructurada, respuesta correcta, pista de examen y referencia normativa en legislación.
-- Los nuevos bancos pueden usar `detailedExplanation` y `article`.
-- Nueva paleta lila.
-- Barras por tema: verde 90–100 %, amarillo 70–89 %, rojo por debajo del 70 %.
-- GIF/stickers locales de gatos y perros: funcionan también sin conexión después de cargar la PWA.
-- Mensaje motivacional en Inicio.
+Esta versión corrige el método de actualización de V3:
+- los GIF están en la raíz del repositorio;
+- el service worker ya no depende de que existan los GIF para instalarse;
+- CSS y JS llevan un identificador de versión para evitar que el navegador conserve la V2;
+- en Inicio debe verse claramente `V3.1 · Hoy también cuenta`.
 
-## Actualizar GitHub Pages
-Sube el CONTENIDO de esta carpeta al mismo repositorio, sustituyendo los archivos existentes.
-Asegúrate de subir también la carpeta `stickers`.
-Después pulsa Commit changes. El enlace de GitHub Pages no cambia.
-Si ves la versión anterior, espera un minuto y haz Ctrl+F5.
+## Subida a GitHub
+1. Descomprime `Actualizacion_Auxiliar_CM_V31.zip`.
+2. En la RAÍZ del mismo repositorio pulsa Add file > Upload files.
+3. Sube TODOS los archivos extraídos. No subas el ZIP.
+4. Acepta reemplazar los archivos existentes y pulsa Commit changes.
+5. Espera a que GitHub Pages termine el despliegue.
+6. Abre la misma URL de siempre y pulsa Ctrl+F5.
+
+No borra ni modifica el progreso guardado en localStorage.

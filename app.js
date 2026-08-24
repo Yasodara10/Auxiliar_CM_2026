@@ -1,5 +1,5 @@
 
-const APP_VERSION = "3.0.0";
+const APP_VERSION = "3.1.0";
 const STORAGE_KEY = "aux_cm_2026_progress_v1";
 const BANK_KEY = "aux_cm_2026_custom_bank_v1";
 
@@ -83,8 +83,8 @@ function stablePick(q,arr){
   return arr[h%arr.length];
 }
 function reactionHtml(q,good){
-  const goodGifs=["stickers/cat_nice.gif","stickers/dog_case_closed.gif"];
-  const badGifs=["stickers/cat_oops.gif","stickers/dog_nope.gif"];
+  const goodGifs=["sticker_cat_nice.gif","sticker_dog_case_closed.gif"];
+  const badGifs=["sticker_cat_oops.gif","sticker_dog_nope.gif"];
   const src=stablePick(q,good?goodGifs:badGifs);
   const alt=good?"Sticker de celebración":"Sticker de ánimo";
   return `<div class="reaction"><img src="${src}" alt="${alt}" loading="lazy"></div>`;
@@ -313,11 +313,11 @@ function renderHome(app){
   app.innerHTML=`
     <section class="motivationStrip">
       <div class="motivationCopy">
-        <span class="motivationEyebrow">Hoy también cuenta</span>
+        <span class="motivationEyebrow">V3.1 · Hoy también cuenta</span>
         <strong>Una plaza se construye pregunta a pregunta. Tú puedes con esto.</strong>
         <span>Sigue sumando. No necesitas hacerlo perfecto; necesitas seguir.</span>
       </div>
-      <img src="stickers/cat_you_can.gif" alt="Sticker de gato animando" class="motivationGif">
+      <img src="sticker_cat_you_can.gif" alt="Sticker de gato animando" class="motivationGif">
     </section>
     <section class="hero">
       <h1>Practica rápido. Repite lo que fallas.</h1>
@@ -347,7 +347,7 @@ function renderHome(app){
         <div class="metric">${activeFavs}</div><div class="metricLabel">preguntas marcadas</div>
       </div>
       <div class="card full shortcutCard">
-        <img src="stickers/dog_keep_going.gif" alt="Sticker de perro animando" class="miniGif">
+        <img src="sticker_dog_keep_going.gif" alt="Sticker de perro animando" class="miniGif">
         <div><h2>Atajos</h2><p><kbd>A</kbd> <kbd>B</kbd> <kbd>C</kbd> <kbd>D</kbd> responder · <kbd>←</kbd>/<kbd>→</kbd> navegar · <kbd>F</kbd> favorita · <kbd>Enter</kbd> continuar después de corregir.</p></div>
       </div>
     </section>`;
@@ -729,6 +729,6 @@ document.getElementById("installBtn").addEventListener("click",async()=>{if(!def
 window.addEventListener("appinstalled",()=>toast("Aplicación instalada."));
 
 if("serviceWorker" in navigator && location.protocol!=="file:"){
-  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));
+  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js?v=31",{updateViaCache:"none"}).catch(()=>{}));
 }
 render();
